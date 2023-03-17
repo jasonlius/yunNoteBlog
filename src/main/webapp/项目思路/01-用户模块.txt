@@ -1,0 +1,162 @@
+用户模块
+    通过用户行为来区分       actionName
+        用户登录           actionName="login"
+        进入个人中心        actionName="userCenter"
+        加载头像            actionName="userHead"
+        验证昵称的唯一性     actionName="checkNick"
+        修改用户信息        actionName="updateUser"
+        用户退出            actionName="logout"
+
+    在UserServlet的service方法中
+        1.获取用户行为
+            String actionName = request.getParameter("actionName");
+        2. 判断用户行为，调用对应的方法
+            if ("login".equals(actionName)) {
+                // 用户登录
+            } else if ("userCenter".equals(actionName)) {
+                // 进入个人中心
+            }
+
+
+一、用户登录
+    ==================前端实现==================
+        1. 添加表单，设置表单属性
+            action="user" method="post" id="loginForm"
+        2. 设置表单元素的那么属性值，修改id属性值（首字母改小写）
+            设置文本框和密码框的那么属性值
+            设置复选框的那么属性值和value属性值（如果复选框未选中，在获取不到value属性值）
+            设置隐藏域，传递用户行为 （name="actionName" value="login"）
+        3. 在 config.js 文件中，添加按钮的点击事件绑定的函数 checkLogin()
+            表单校验
+                1. 获取表单元素的值（姓名、密码）
+                2. 判断元素的值是否为空（引入util.js文件）
+                    如果为空，设置提示信息 （通过设置span标签），并return
+                3. 如果不为空，则提交表单
+
+    ==================后端实现==================
+    整体思路：
+        1. 获取参数 （姓名、密码）
+        2. 参数的非空校验  （ResultInfo的封装类，用来封装响应结果  状态码、提示信息、返回的对象）
+            如果为空
+                设置ResultInfo对象的状态码和提示信息
+                将ResultInfo对象设置request作用域中
+                请求转发跳转到登录页面
+                return
+        3. 如果不为空，通过用户名查询用户对象
+        4. 判断用户对象是否为空
+            如果为空
+                设置ResultInfo对象的状态码和提示信息
+                将ResultInfo对象设置request作用域中
+                请求转发跳转到登录页面
+                return
+        5. 如果用户对象不为空，将数据库中查询到的用户对象的密码与前台传递的密码作比较 （将密码加密后再比较）
+            如果密码不正确
+                设置ResultInfo对象的状态码和提示信息
+                将ResultInfo对象设置request作用域中
+                请求转发跳转到登录页面
+                return
+        6. 如果密码正确
+            将用户信息存到session作用域中
+            判断用户是否选择记住密码（rem的值是1）
+                如果是，将用户姓名与密码存到cookie中，设置失效时间，并响应给客户端
+                如果否，清空原有的cookie对象
+            重定向跳转到index页面
+
+    分层思想：
+        Web层：（控制层：接收参数、响应数据）
+            1. 获取参数 （姓名、密码）
+            2. 调用Service层的方法，返回ResultInfo对象
+            3. 判断是否登录成功
+                如果失败
+                    将resultInfo对象设置到request作用域中
+                    请求转发跳转到登录页面
+                如果成功
+                    将用户信息设置到session作用域中
+                    判断用户是否选择记住密码（rem的值是1）
+                        如果是，将用户姓名与密码存到cookie中，设置失效时间，并响应给客户端
+                        如果否，清空原有的cookie对象
+                    重定向跳转到index页面
+
+        Service层：（业务逻辑层：参数判断、业务逻辑处理）
+            1. 判断参数是否为空
+                如果为空
+                    设置ResultInfo对象的状态码和提示信息
+                    返回resultInfo对象
+            2. 如果不为空，通过用户名查询用户对象
+            3. 判断用户对象是否为空
+                    如果为空
+                        设置ResultInfo对象的状态码和提示信息
+                        返回resultInfo对象
+            4. 如果用户对象不为空，将数据库中查询到的用户对象的密码与前台传递的密码作比较 （将密码加密后再比较）
+                   如果密码不正确
+                        设置ResultInfo对象的状态码和提示信息
+                        返回resultInfo对象
+            5. 如果密码正确
+                设置ResultInfo对象的状态码和提示信息
+            6. 返回resultInfo对象
+
+
+        Dao层：（数据访问层：数据库中的增删改查操作）
+            通过用户名查询用户对象， 返回用户对象
+                1. 获取数据库连接
+                2. 定义sql语句
+                3. 预编译
+                4. 设置参数
+                5. 执行查询，返回结果集
+                6. 判断并分析结果集
+                7. 关闭资源
+
+
+二、非法访问拦截和免登录
+
+	非法访问拦截
+		拦截的资源：
+			所有资源   /*
+
+		需要被放行的资源：
+			1、指定页面，放行 （用户无需登录即可访问的页面；例如：登录页面login.jsp、注册页面register.jsp等）
+			2、静态资源，放行 （存放在statics目录下的资源；例如：js、css、images等）
+			3、指定行为，放行 （用户无需登录即可执行的操作；例如：登录操作user?actionName=login、注册操作等）
+			4、登录状态，放行 （判断session作用域中是否存在用户信息；存在就放行，不存在，就拦截跳转到登录页面）
+
+	免登录（自动登录）
+		通过Cookie和Session对象实现
+		什么时候使用免登录：
+		    当用户处于未登录状态，且去请求需要登录才能访问的资源时，调用自动登录功能
+		目的：
+			让用户处于登录状态（自动调用登录方法）
+		实现：
+			从Cookie对象中获取用户的姓名与密码，自动执行登录操作
+				1、获取cookie数组
+				2、判断cookie数组
+				3、遍历cookie数组，获取指定的cookie对象   （name为user的cookie对象）
+				4、得到指定cookie对象的value    （姓名与密码：userName-userPwd）
+				5、通过split()方法将value字符串转换成数组
+				6、从数组中别得到姓名和密码
+				7、请求转发跳转到登录操作    user?actionName=login&userName=姓名&userPwd=密码
+				return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
