@@ -1,8 +1,13 @@
 package com.jason.yunNote;
 
+import dao.UserDao;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import po.User;
 import utils.DBUtil;
 
 public class TestDB {
@@ -18,10 +23,16 @@ public class TestDB {
     * */
     @Test
     public void testDB(){
-
         System.out.println(DBUtil.getConnection());
         logger.info("获取数据库连接"+DBUtil.getConnection());
-
     }
 
+    @Test
+    public  void  testQueryUserbyName(){
+        BeanFactory beanFactory =new ClassPathXmlApplicationContext("spring.xml");
+        UserDao userDao = (UserDao) beanFactory.getBean("userDao");
+        User user = userDao.queryUserByName("admin");
+        System.out.println(user.getUpwd());
+
+    }
 }
