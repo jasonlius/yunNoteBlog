@@ -8,7 +8,10 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import po.User;
+import services.UserService;
 import utils.DBUtil;
+import vo.ResultInfo;
+
 
 public class TestDB {
 
@@ -21,6 +24,7 @@ public class TestDB {
     * 4。每个方法都能独立运行
     * 5.方法为绿色表示测试成功
     * */
+    BeanFactory beanFactory =new ClassPathXmlApplicationContext("spring.xml");
     @Test
     public void testDB(){
         System.out.println(DBUtil.getConnection());
@@ -29,10 +33,15 @@ public class TestDB {
 
     @Test
     public  void  testQueryUserbyName(){
-        BeanFactory beanFactory =new ClassPathXmlApplicationContext("spring.xml");
         UserDao userDao = (UserDao) beanFactory.getBean("userDao");
         User user = userDao.queryUserByName("admin");
         System.out.println(user.getUpwd());
+    }
 
+    @Test
+    public  void testCheckLoginInfo(){
+         UserService userService = (UserService) beanFactory.getBean("userService");
+         ResultInfo<User> resultInfo =  userService.checkLoginInfo("42344","");
+         logger.info(resultInfo.getMsg());
     }
 }
