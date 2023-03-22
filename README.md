@@ -27,7 +27,7 @@
 ### 克隆代码
 
 ```
-git clone https://github.com/your_username/yunNoteBlog.git
+git clone https://github.com/jasonlius/yunNoteBlog.git
 ```
 
 ### 运行项目
